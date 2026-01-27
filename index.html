@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Actor Database</title>
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
+</head>
+<body>
+
+<div id="tag-filters"></div>
+<table id="actors" class="display"></table>
+
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+
+<script>
+Papa.parse("actors.csv", {
+  download: true,
+  header: true,
+  complete: function(results) {
+    const data = results.data.map(r => ({
+      name: r.name,
+      added: r.added,
+      tags: r.tags.split(';').map(t => t.trim()),  // tags separated by ;
+      socials: {
+        instagram: r.instagram,
+        twitter: r.twitter
+      }
+    }));
+
+    const uniqueTags = [...new Set(data.flatMap(a => a.tags))];
+    $('#tag-filters').html(uniqueTags.map(t =>
+      `<label><input type="checkbox" value="${t}"> ${t}</label>`
+    ).join(" "));
+
+    const table = $('#actors').DataTable({
+      data: data,
+      order: [[1, "desc"]],
+      columns: [
+        { title: "Name", data: "name" },
+        { title: "Added", data: "added" },
+        {
+          title: "Tags",
+          data: "tags",
+          render: tags => tags.join(", ")
+        },
+        {
+          title: "Socials",
+          data: "socials",
+          orderable: false,
+          render: socials => Object.entries(socials).map(
+            ([k,v]) => v ? `<a href="${v}" target="_blank">${k}</a>` : ""
+          ).join(" ")
+        }
+      ]
+    });
+
+    $.fn.dataTable.ext.search.push((settings, rowData) => {
+      const checked = $('#tag-filters input:checked').map((_,el) => el.value).get();
+      if (!checked.length) return true;
+      const tags = rowData[2].split(", ");
+      return checked.every(t => tags.includes(t));
+    });
+
+    $('#tag-filters input').on('change', () => table.draw());
+  }
+});
+</script>
+
+</body>
+</html>
