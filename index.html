@@ -8,13 +8,78 @@
         href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
 
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    #tag-filters label { margin-right: 10px; }
+    body {
+      font-family: system-ui, sans-serif;
+      padding: 20px;
+    }
+
+    /* ---------- Tag Search ---------- */
+    #tag-search {
+      position: relative;
+      max-width: 400px;
+      margin-bottom: 8px;
+    }
+
+    #tag-input {
+      width: 100%;
+      padding: 6px 8px;
+      font-size: 0.95em;
+    }
+
+    #tag-suggestions {
+      position: absolute;
+      background: white;
+      border: 1px solid #ccc;
+      width: 100%;
+      z-index: 20;
+    }
+
+    .suggestion {
+      padding: 6px 8px;
+      cursor: pointer;
+    }
+
+    .suggestion:hover {
+      background: #eee;
+    }
+
+    /* ---------- Pills ---------- */
+    .pill {
+      display: inline-block;
+      margin: 3px 4px 3px 0;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #eee;
+      font-size: 0.8em;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .pill::after {
+      margin-left: 6px;
+      opacity: 0;
+    }
+
+    .pill.add:hover::after {
+      content: "＋";
+      opacity: 1;
+    }
+
+    .pill.remove:hover::after {
+      content: "✕";
+      opacity: 1;
+    }
+
+    #active-tags {
+      margin-bottom: 14px;
+    }
+
+    /* ---------- Link Buttons ---------- */
     .link-btn {
       display: inline-block;
       margin: 2px 4px 2px 0;
       padding: 2px 6px;
-      font-size: 0.85em;
+      font-size: 0.8em;
       border: 1px solid #ccc;
       border-radius: 4px;
       text-decoration: none;
@@ -25,8 +90,12 @@
 
 <h2>Creator Database</h2>
 
-<div id="tag-filters"></div>
-<br>
+<div id="tag-search">
+  <input id="tag-input" type="text" placeholder="Filter by tag…" />
+  <div id="tag-suggestions"></div>
+</div>
+
+<div id="active-tags"></div>
 
 <table id="table" class="display" style="width:100%"></table>
 
@@ -35,16 +104,21 @@
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <script>
+const activeTags = new Set();
+let allTags = [];
+let rows = [];
+let table = null;
+
 Papa.parse("actors.csv", {
   download: true,
   header: true,
   skipEmptyLines: true,
   complete: function(results) {
 
-    // Remove rows without a Name
-    const rows = results.data.filter(r => r.Name);
+    // Keep only valid rows
+    rows = results.data.filter(r => r.Name);
 
-    // Extract tags safely
+    // Parse tags defensively
     rows.forEach(r => {
       r.__tags = (r.Tags || "")
         .split(";")
@@ -52,15 +126,9 @@ Papa.parse("actors.csv", {
         .filter(Boolean);
     });
 
-    // Build tag filter UI
-    const allTags = [...new Set(rows.flatMap(r => r.__tags))].sort();
-    $('#tag-filters').html(
-      allTags.map(t =>
-        `<label><input type="checkbox" value="${t}"> ${t}</label>`
-      ).join(" ")
-    );
+    allTags = [...new Set(rows.flatMap(r => r.__tags))].sort();
 
-    // Dynamically generate columns
+    // Build columns dynamically (ignore internal fields)
     const headers = Object.keys(rows[0]).filter(h => !h.startsWith("__"));
 
     const columns = headers.map(h => {
@@ -68,11 +136,13 @@ Papa.parse("actors.csv", {
         return {
           title: h,
           data: h,
-          render: v => v || ""
+          render: (_, __, row) =>
+            row.__tags.map(t =>
+              `<span class="pill add" data-tag="${t}">${t}</span>`
+            ).join("")
         };
       }
 
-      // Render URLs as buttons
       return {
         title: h,
         data: h,
@@ -85,27 +155,75 @@ Papa.parse("actors.csv", {
       };
     });
 
-    const table = $('#table').DataTable({
+    table = $('#table').DataTable({
       data: rows,
       columns: columns,
-      order: [[0, "asc"]] // Name column
+      order: [[0, "asc"]]
     });
 
-    // Tag AND-filter
-    $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-      const selected = $('#tag-filters input:checked')
-        .map((_, el) => el.value)
-        .get();
-
-      if (!selected.length) return true;
-
-      const rowTags = rows[dataIndex].__tags;
-      return selected.every(t => rowTags.includes(t));
+    // AND-based tag filter
+    $.fn.dataTable.ext.search.push((settings, data, dataIndex) => {
+      if (!activeTags.size) return true;
+      return [...activeTags].every(t => rows[dataIndex].__tags.includes(t));
     });
 
-    $('#tag-filters input').on('change', () => table.draw());
+    // Row tag add (+)
+    $('#table').on('click', '.pill.add', function() {
+      const tag = this.dataset.tag;
+      if (!activeTags.has(tag)) {
+        activeTags.add(tag);
+        renderActiveTags();
+        table.draw();
+      }
+    });
+
+    setupTagSearch();
   }
 });
+
+function renderActiveTags() {
+  $('#active-tags').html(
+    [...activeTags].map(t =>
+      `<span class="pill remove" data-tag="${t}">${t}</span>`
+    ).join("")
+  );
+
+  $('#active-tags .pill').on('click', function() {
+    activeTags.delete(this.dataset.tag);
+    renderActiveTags();
+    table.draw();
+  });
+}
+
+function setupTagSearch() {
+  $('#tag-input').on('input', function() {
+    const q = this.value.toLowerCase();
+    const matches = allTags.filter(t =>
+      t.toLowerCase().includes(q) && !activeTags.has(t)
+    );
+
+    $('#tag-suggestions').html(
+      matches.slice(0, 8).map(t =>
+        `<div class="suggestion" data-tag="${t}">${t}</div>`
+      ).join("")
+    );
+  });
+
+  $('#tag-suggestions').on('click', '.suggestion', function() {
+    activeTags.add(this.dataset.tag);
+    $('#tag-input').val("");
+    $('#tag-suggestions').empty();
+    renderActiveTags();
+    table.draw();
+  });
+
+  // Click outside closes suggestions
+  document.addEventListener("click", e => {
+    if (!e.target.closest("#tag-search")) {
+      $('#tag-suggestions').empty();
+    }
+  });
+}
 </script>
 
 </body>
