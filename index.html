@@ -43,6 +43,23 @@
       background: #eee;
     }
 
+    /* ---------- Tags column sizing ---------- */
+    th.tags-column,
+    td.tags-column {
+      min-width: 260px;
+    }
+
+    .tags-column {
+      white-space: normal !important;
+    }
+
+    .tags-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: flex-start;
+    }
+
     /* ---------- Pills ---------- */
     .pill {
       display: inline-block;
@@ -137,9 +154,11 @@ Papa.parse("actors.csv", {
           title: h,
           data: h,
           render: (_, __, row) =>
-            row.__tags.map(t =>
+          `<div class="tags-container">
+            ${row.__tags.map(t =>
               `<span class="pill add" data-tag="${t}">${t}</span>`
-            ).join("")
+            ).join("")}
+          </div>`
         };
       }
 
@@ -158,7 +177,15 @@ Papa.parse("actors.csv", {
     table = $('#table').DataTable({
       data: rows,
       columns: columns,
-      order: [[0, "asc"]]
+      autoWidth: false,
+      order: [[0, "asc"]],
+      columnDefs: [
+        {
+          targets: headers.indexOf("Tags"),
+          className: "tags-column",
+          width: "260px"
+        }
+      ]
     });
 
     // AND-based tag filter
