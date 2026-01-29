@@ -1,52 +1,335 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Creator Database</title>
 
   <link rel="stylesheet"
         href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
 
   <style>
-    body {
-      font-family: system-ui, sans-serif;
-      padding: 20px;
+    :root {
+      /* Dark theme (default) */
+      --bg-primary: #0d1117;
+      --bg-secondary: #161b22;
+      --bg-tertiary: #21262d;
+      --bg-hover: #30363d;
+      --border-color: #30363d;
+      --text-primary: #e6edf3;
+      --text-secondary: #8b949e;
+      --text-muted: #6e7681;
+      --accent: #58a6ff;
+      --accent-hover: #79b8ff;
+      --pill-bg: #30363d;
+      --pill-text: #c9d1d9;
+      --pill-hover: #484f58;
+      --link-color: #58a6ff;
+      --shadow: 0 3px 6px rgba(0,0,0,0.3);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
     }
 
-    /* ---------- Tag Search ---------- */
-    #tag-search {
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #f6f8fa;
+      --bg-tertiary: #f0f3f6;
+      --bg-hover: #e8ebef;
+      --border-color: #d0d7de;
+      --text-primary: #1f2328;
+      --text-secondary: #57606a;
+      --text-muted: #8c959f;
+      --accent: #0969da;
+      --accent-hover: #0550ae;
+      --pill-bg: #e8ebef;
+      --pill-text: #1f2328;
+      --pill-hover: #d0d7de;
+      --link-color: #0969da;
+      --shadow: 0 3px 6px rgba(0,0,0,0.08);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      margin: 0;
+      padding: 24px;
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    /* ---------- Header ---------- */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 1.75rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    /* ---------- Theme Toggle ---------- */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .theme-toggle-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+
+    .toggle-switch {
       position: relative;
-      max-width: 400px;
-      margin-bottom: 8px;
+      width: 52px;
+      height: 28px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch::before {
+      content: "";
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: var(--text-secondary);
+      border-radius: 50%;
+      transition: all 0.3s ease;
+    }
+
+    .toggle-switch:hover {
+      border-color: var(--accent);
+    }
+
+    .toggle-switch.active::before {
+      transform: translateX(24px);
+      background: var(--accent);
+    }
+
+    .toggle-icons {
+      display: flex;
+      gap: 6px;
+      font-size: 1.1rem;
+    }
+
+    /* ---------- Search & Filter Bar ---------- */
+    .filter-bar {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      box-shadow: var(--shadow);
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+
+    .search-wrapper {
+      position: relative;
+      flex: 0 1 320px;
+      min-width: 200px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
     }
 
     #tag-input {
       width: 100%;
-      padding: 6px 8px;
-      font-size: 0.95em;
+      padding: 10px 12px 10px 38px;
+      font-size: 0.9rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    #tag-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #tag-input:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
     }
 
     #tag-suggestions {
       position: absolute;
-      background: white;
-      border: 1px solid #ccc;
-      width: 100%;
-      z-index: 20;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: var(--shadow-lg);
+      z-index: 100;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    #tag-suggestions:empty {
+      display: none;
     }
 
     .suggestion {
-      padding: 6px 8px;
+      padding: 10px 14px;
       cursor: pointer;
+      font-size: 0.875rem;
+      color: var(--text-primary);
+      transition: background 0.15s ease;
+    }
+
+    .suggestion:first-child {
+      border-radius: 7px 7px 0 0;
+    }
+
+    .suggestion:last-child {
+      border-radius: 0 0 7px 7px;
+    }
+
+    .suggestion:only-child {
+      border-radius: 7px;
     }
 
     .suggestion:hover {
-      background: #eee;
+      background: var(--bg-hover);
     }
 
-    /* ---------- Tags column sizing ---------- */
+    /* ---------- Active Tags ---------- */
+    .active-tags-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .active-tags-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      white-space: nowrap;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #active-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+    }
+
+    #active-tags:empty::before {
+      content: "No filters active";
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-style: italic;
+    }
+
+    /* ---------- Pills ---------- */
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--pill-bg);
+      color: var(--pill-text);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      user-select: none;
+      border: 1px solid transparent;
+      transition: all 0.15s ease;
+    }
+
+    .pill:hover {
+      background: var(--pill-hover);
+      border-color: var(--border-color);
+    }
+
+    .pill.add:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .pill.add::after {
+      content: "+";
+      font-size: 0.9em;
+      opacity: 0;
+      margin-left: -2px;
+      transition: opacity 0.15s ease;
+    }
+
+    .pill.add:hover::after {
+      opacity: 0.7;
+    }
+
+    .pill.remove {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .pill.remove:hover {
+      background: #d73a49;
+      border-color: #d73a49;
+    }
+
+    .pill.remove::after {
+      content: "×";
+      font-size: 1.1em;
+      font-weight: 400;
+      opacity: 0.7;
+      margin-left: -2px;
+    }
+
+    .pill.remove:hover::after {
+      opacity: 1;
+    }
+
+    /* ---------- Table Container ---------- */
+    .table-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: var(--shadow);
+      overflow-x: auto;
+    }
+
+    /* ---------- Tags Column ---------- */
     th.tags-column,
     td.tags-column {
-      min-width: 260px;
+      min-width: 280px;
     }
 
     .tags-column {
@@ -60,67 +343,241 @@
       align-items: flex-start;
     }
 
-    /* ---------- Pills ---------- */
-    .pill {
-      display: inline-block;
-      margin: 3px 4px 3px 0;
-      padding: 4px 10px;
-      border-radius: 999px;
-      background: #eee;
-      font-size: 0.8em;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .pill::after {
-      margin-left: 6px;
-      opacity: 0;
-    }
-
-    .pill.add:hover::after {
-      content: "＋";
-      opacity: 1;
-    }
-
-    .pill.remove:hover::after {
-      content: "✕";
-      opacity: 1;
-    }
-
-    #active-tags {
-      margin-bottom: 14px;
-    }
-
     /* ---------- Link Buttons ---------- */
     .link-btn {
       display: inline-block;
       margin: 2px 4px 2px 0;
-      padding: 2px 6px;
-      font-size: 0.8em;
-      border: 1px solid #ccc;
-      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--link-color);
       text-decoration: none;
+      transition: all 0.15s ease;
+    }
+
+    .link-btn:hover {
+      background: var(--bg-hover);
+      border-color: var(--accent);
+    }
+
+    /* ---------- DataTables Overrides ---------- */
+    .dataTables_wrapper {
+      font-size: 0.9rem;
+    }
+
+    table.dataTable {
+      border-collapse: collapse !important;
+      margin-top: 12px !important;
+    }
+
+    table.dataTable thead th,
+    table.dataTable thead td {
+      border-bottom: 2px solid var(--border-color) !important;
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+      font-weight: 600;
+      padding: 12px 14px !important;
+    }
+
+    table.dataTable tbody tr {
+      background: var(--bg-secondary);
+      transition: background 0.15s ease;
+    }
+
+    table.dataTable tbody tr:hover {
+      background: var(--bg-tertiary) !important;
+    }
+
+    table.dataTable tbody td {
+      padding: 12px 14px !important;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+
+    table.dataTable.stripe tbody tr.odd,
+    table.dataTable.display tbody tr.odd {
+      background: var(--bg-secondary);
+    }
+
+    table.dataTable.stripe tbody tr.even,
+    table.dataTable.display tbody tr.even {
+      background: var(--bg-primary);
+    }
+
+    .dataTables_info,
+    .dataTables_length,
+    .dataTables_filter {
+      color: var(--text-secondary) !important;
+      margin-bottom: 12px;
+    }
+
+    .dataTables_length select,
+    .dataTables_filter input {
+      background: var(--bg-tertiary) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 6px !important;
+      color: var(--text-primary) !important;
+      padding: 6px 10px !important;
+      margin: 0 6px;
+    }
+
+    .dataTables_filter input:focus {
+      outline: none;
+      border-color: var(--accent) !important;
+    }
+
+    .dataTables_paginate {
+      margin-top: 16px !important;
+    }
+
+    .dataTables_paginate .paginate_button {
+      background: var(--bg-tertiary) !important;
+      border: 1px solid var(--border-color) !important;
+      border-radius: 6px !important;
+      color: var(--text-primary) !important;
+      margin: 0 2px;
+      padding: 6px 12px !important;
+      transition: all 0.15s ease;
+    }
+
+    .dataTables_paginate .paginate_button:hover {
+      background: var(--bg-hover) !important;
+      border-color: var(--accent) !important;
+      color: var(--accent) !important;
+    }
+
+    .dataTables_paginate .paginate_button.current {
+      background: var(--accent) !important;
+      border-color: var(--accent) !important;
+      color: #fff !important;
+    }
+
+    .dataTables_paginate .paginate_button.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    .dataTables_paginate .paginate_button.disabled:hover {
+      background: var(--bg-tertiary) !important;
+      border-color: var(--border-color) !important;
+      color: var(--text-primary) !important;
+    }
+
+    /* Sort icons */
+    table.dataTable thead .sorting::before,
+    table.dataTable thead .sorting::after,
+    table.dataTable thead .sorting_asc::before,
+    table.dataTable thead .sorting_asc::after,
+    table.dataTable thead .sorting_desc::before,
+    table.dataTable thead .sorting_desc::after {
+      opacity: 0.5;
+    }
+
+    table.dataTable thead .sorting_asc::before,
+    table.dataTable thead .sorting_desc::after {
+      opacity: 1;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 768px) {
+      body {
+        padding: 16px;
+      }
+
+      .header h1 {
+        font-size: 1.4rem;
+      }
+
+      .filter-bar {
+        padding: 14px;
+      }
+
+      .filter-row {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-wrapper {
+        flex: 1;
+        width: 100%;
+      }
+
+      .active-tags-wrapper {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .table-container {
+        padding: 12px;
+      }
     }
   </style>
 </head>
 <body>
 
-<h2>Creator Database</h2>
+<header class="header">
+  <h1>Creator Database</h1>
+  <div class="theme-toggle">
+    <span class="toggle-icons">
+      <span class="icon-dark">&#x1F319;</span>
+    </span>
+    <div class="toggle-switch" id="theme-toggle" role="button" aria-label="Toggle theme"></div>
+    <span class="toggle-icons">
+      <span class="icon-light">&#9728;</span>
+    </span>
+  </div>
+</header>
 
-<div id="tag-search">
-  <input id="tag-input" type="text" placeholder="Filter by tag…" />
-  <div id="tag-suggestions"></div>
+<div class="filter-bar">
+  <div class="filter-row">
+    <div class="search-wrapper">
+      <span class="search-icon">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/>
+        </svg>
+      </span>
+      <input id="tag-input" type="text" placeholder="Search tags to filter..." autocomplete="off" />
+      <div id="tag-suggestions"></div>
+    </div>
+    <div class="active-tags-wrapper">
+      <span class="active-tags-label">Active Filters:</span>
+      <div id="active-tags"></div>
+    </div>
+  </div>
 </div>
 
-<div id="active-tags"></div>
-
-<table id="table" class="display" style="width:100%"></table>
+<div class="table-container">
+  <table id="table" class="display" style="width:100%"></table>
+</div>
 
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 <script src="https://cdn.datatables.net/1.13.8/js/jquery.dataTables.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 
 <script>
+// Theme toggle
+const themeToggle = document.getElementById('theme-toggle');
+const html = document.documentElement;
+
+function setTheme(theme) {
+  html.setAttribute('data-theme', theme);
+  localStorage.setItem('theme', theme);
+  themeToggle.classList.toggle('active', theme === 'light');
+}
+
+// Initialize theme from localStorage or default to dark
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+
+themeToggle.addEventListener('click', () => {
+  const current = html.getAttribute('data-theme');
+  setTheme(current === 'dark' ? 'light' : 'dark');
+});
+
+// Data handling
 const activeTags = new Set();
 let allTags = [];
 let rows = [];
@@ -183,9 +640,17 @@ Papa.parse("actors.csv", {
         {
           targets: headers.indexOf("Tags"),
           className: "tags-column",
-          width: "260px"
+          width: "280px"
         }
-      ]
+      ],
+      language: {
+        search: "",
+        searchPlaceholder: "Search all columns...",
+        lengthMenu: "Show _MENU_ entries",
+        info: "Showing _START_ to _END_ of _TOTAL_ creators",
+        infoEmpty: "No creators found",
+        infoFiltered: "(filtered from _MAX_ total)"
+      }
     });
 
     // AND-based tag filter
@@ -225,15 +690,32 @@ function renderActiveTags() {
 function setupTagSearch() {
   $('#tag-input').on('input', function() {
     const q = this.value.toLowerCase();
+    if (!q) {
+      $('#tag-suggestions').empty();
+      return;
+    }
+
     const matches = allTags.filter(t =>
       t.toLowerCase().includes(q) && !activeTags.has(t)
     );
 
     $('#tag-suggestions').html(
-      matches.slice(0, 8).map(t =>
+      matches.slice(0, 10).map(t =>
         `<div class="suggestion" data-tag="${t}">${t}</div>`
       ).join("")
     );
+  });
+
+  $('#tag-input').on('keydown', function(e) {
+    if (e.key === 'Enter') {
+      const firstSuggestion = $('#tag-suggestions .suggestion').first();
+      if (firstSuggestion.length) {
+        firstSuggestion.click();
+      }
+    } else if (e.key === 'Escape') {
+      $('#tag-suggestions').empty();
+      this.blur();
+    }
   });
 
   $('#tag-suggestions').on('click', '.suggestion', function() {
@@ -246,7 +728,7 @@ function setupTagSearch() {
 
   // Click outside closes suggestions
   document.addEventListener("click", e => {
-    if (!e.target.closest("#tag-search")) {
+    if (!e.target.closest(".search-wrapper")) {
       $('#tag-suggestions').empty();
     }
   });
