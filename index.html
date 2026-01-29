@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Creator Database</title>
+  <title>SC Database</title>
 
   <link rel="stylesheet"
         href="https://cdn.datatables.net/1.13.8/css/jquery.dataTables.min.css">
@@ -72,11 +72,22 @@
       gap: 16px;
     }
 
+    .header-title {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
     .header h1 {
       margin: 0;
       font-size: 1.75rem;
       font-weight: 600;
       color: var(--text-primary);
+    }
+
+    .last-updated {
+      font-size: 0.85rem;
+      color: var(--text-muted);
     }
 
     /* ---------- Theme Toggle ---------- */
@@ -588,7 +599,10 @@
 <body>
 
 <header class="header">
-  <h1>Creator Database</h1>
+  <div class="header-title">
+    <h1>SC Database</h1>
+    <span class="last-updated" id="last-updated"></span>
+  </div>
   <div class="theme-toggle">
     <span class="toggle-icons">
       <span class="icon-dark">&#x1F319;</span>
@@ -657,6 +671,33 @@ themeToggle.addEventListener('click', () => {
   const current = html.getAttribute('data-theme');
   setTheme(current === 'dark' ? 'light' : 'dark');
 });
+
+// Fetch last updated date from GitHub
+function formatDate(dateStr) {
+  const date = new Date(dateStr);
+  const day = date.getDate();
+  const month = date.toLocaleString('en-US', { month: 'long' });
+  const year = date.getFullYear();
+
+  // Add ordinal suffix
+  const suffix = (day === 1 || day === 21 || day === 31) ? 'st' :
+                 (day === 2 || day === 22) ? 'nd' :
+                 (day === 3 || day === 23) ? 'rd' : 'th';
+
+  return `${month} ${day}${suffix}, ${year}`;
+}
+
+fetch('https://api.github.com/repos/dragooner/dragooner.github.io/commits?path=actors.csv&per_page=1')
+  .then(res => res.json())
+  .then(commits => {
+    if (commits && commits[0] && commits[0].commit) {
+      const date = commits[0].commit.committer.date;
+      document.getElementById('last-updated').textContent = `Last updated ${formatDate(date)}`;
+    }
+  })
+  .catch(() => {
+    // Silently fail - don't show anything if we can't fetch
+  });
 
 // Data handling
 const activeTags = new Set();
