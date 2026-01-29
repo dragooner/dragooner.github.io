@@ -129,7 +129,52 @@
       font-size: 1.1rem;
     }
 
-    /* ---------- Search & Filter Bar ---------- */
+    /* ---------- Search Bar ---------- */
+    .search-bar {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 16px 20px;
+      margin-bottom: 12px;
+      box-shadow: var(--shadow);
+    }
+
+    .search-input-wrapper {
+      position: relative;
+      max-width: 500px;
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    #text-search {
+      width: 100%;
+      padding: 10px 12px 10px 38px;
+      font-size: 0.9rem;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      transition: all 0.2s ease;
+    }
+
+    #text-search::placeholder {
+      color: var(--text-muted);
+    }
+
+    #text-search:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(88, 166, 255, 0.15);
+    }
+
+    /* ---------- Filter Bar ---------- */
     .filter-bar {
       background: var(--bg-secondary);
       border: 1px solid var(--border-color);
@@ -146,19 +191,14 @@
       flex-wrap: wrap;
     }
 
-    .search-wrapper {
+    .tag-search-wrapper {
       position: relative;
-      flex: 0 1 320px;
+      flex: 0 1 280px;
       min-width: 200px;
     }
 
-    .search-icon {
-      position: absolute;
+    .tag-search-wrapper .search-icon {
       left: 12px;
-      top: 50%;
-      transform: translateY(-50%);
-      color: var(--text-muted);
-      pointer-events: none;
     }
 
     #tag-input {
@@ -253,6 +293,26 @@
       color: var(--text-muted);
       font-size: 0.85rem;
       font-style: italic;
+    }
+
+    .clear-all-btn {
+      padding: 6px 12px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      background: transparent;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .clear-all-btn:hover {
+      background: #d73a49;
+      border-color: #d73a49;
+      color: #fff;
     }
 
     /* ---------- Pills ---------- */
@@ -491,6 +551,14 @@
         font-size: 1.4rem;
       }
 
+      .search-bar {
+        padding: 14px;
+      }
+
+      .search-input-wrapper {
+        max-width: 100%;
+      }
+
       .filter-bar {
         padding: 14px;
       }
@@ -500,7 +568,7 @@
         align-items: stretch;
       }
 
-      .search-wrapper {
+      .tag-search-wrapper {
         flex: 1;
         width: 100%;
       }
@@ -508,6 +576,7 @@
       .active-tags-wrapper {
         flex-direction: column;
         align-items: flex-start;
+        gap: 8px;
       }
 
       .table-container {
@@ -531,20 +600,32 @@
   </div>
 </header>
 
+<div class="search-bar">
+  <div class="search-input-wrapper">
+    <span class="search-icon">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/>
+      </svg>
+    </span>
+    <input id="text-search" type="text" placeholder="Search text..." autocomplete="off" />
+  </div>
+</div>
+
 <div class="filter-bar">
   <div class="filter-row">
-    <div class="search-wrapper">
+    <div class="tag-search-wrapper">
       <span class="search-icon">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
-          <path d="M11.5 7a4.5 4.5 0 1 1-9 0 4.5 4.5 0 0 1 9 0Zm-.82 4.74a6 6 0 1 1 1.06-1.06l3.04 3.04a.75.75 0 1 1-1.06 1.06l-3.04-3.04Z"/>
+          <path d="M1 7.775V2.75C1 1.784 1.784 1 2.75 1h5.025c.464 0 .91.184 1.238.513l6.25 6.25a1.75 1.75 0 0 1 0 2.474l-5.026 5.026a1.75 1.75 0 0 1-2.474 0l-6.25-6.25A1.752 1.752 0 0 1 1 7.775Zm1.5 0c0 .066.026.13.073.177l6.25 6.25a.25.25 0 0 0 .354 0l5.025-5.025a.25.25 0 0 0 0-.354l-6.25-6.25a.25.25 0 0 0-.177-.073H2.75a.25.25 0 0 0-.25.25ZM6 5a1 1 0 1 1 0 2 1 1 0 0 1 0-2Z"/>
         </svg>
       </span>
-      <input id="tag-input" type="text" placeholder="Search tags to filter..." autocomplete="off" />
+      <input id="tag-input" type="text" placeholder="Search tags..." autocomplete="off" />
       <div id="tag-suggestions"></div>
     </div>
     <div class="active-tags-wrapper">
       <span class="active-tags-label">Active Filters:</span>
       <div id="active-tags"></div>
+      <button id="clear-all" class="clear-all-btn" style="display: none;">Clear All</button>
     </div>
   </div>
 </div>
@@ -592,12 +673,13 @@ Papa.parse("actors.csv", {
     // Keep only valid rows
     rows = results.data.filter(r => r.Name);
 
-    // Parse tags defensively
+    // Parse tags defensively and sort alphabetically
     rows.forEach(r => {
       r.__tags = (r.Tags || "")
         .split(";")
         .map(t => t.trim())
-        .filter(Boolean);
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
     });
 
     allTags = [...new Set(rows.flatMap(r => r.__tags))].sort();
@@ -670,6 +752,13 @@ Papa.parse("actors.csv", {
     });
 
     setupTagSearch();
+    setupTextSearch();
+
+    // Hide DataTables default search (we use our own)
+    $('.dataTables_filter').hide();
+
+    // Clear all button
+    $('#clear-all').on('click', clearAllTags);
   }
 });
 
@@ -680,11 +769,20 @@ function renderActiveTags() {
     ).join("")
   );
 
+  // Show/hide clear all button
+  $('#clear-all').toggle(activeTags.size > 0);
+
   $('#active-tags .pill').on('click', function() {
     activeTags.delete(this.dataset.tag);
     renderActiveTags();
     table.draw();
   });
+}
+
+function clearAllTags() {
+  activeTags.clear();
+  renderActiveTags();
+  table.draw();
 }
 
 function setupTagSearch() {
@@ -728,8 +826,22 @@ function setupTagSearch() {
 
   // Click outside closes suggestions
   document.addEventListener("click", e => {
-    if (!e.target.closest(".search-wrapper")) {
+    if (!e.target.closest(".tag-search-wrapper")) {
       $('#tag-suggestions').empty();
+    }
+  });
+}
+
+function setupTextSearch() {
+  $('#text-search').on('input', function() {
+    table.search(this.value).draw();
+  });
+
+  $('#text-search').on('keydown', function(e) {
+    if (e.key === 'Escape') {
+      this.value = '';
+      table.search('').draw();
+      this.blur();
     }
   });
 }
